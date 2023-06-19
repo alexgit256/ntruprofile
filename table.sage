@@ -1,3 +1,13 @@
+"""
+To run simulator on CS lattice with n=211 and beta=60..100 type:
+    run( n=211, q=4096, bpre=60, bpost=100,  projected=False )
+For projective lattice type:
+    run( n=221, q=4096, bpre=50, bpost=92,  projected=True )
+Currently avaliable data:
+    n=211, bpost = 60:100:2, projective=False
+    n=221, bpost = 60:100:2, projective=False
+    n=221, bpost = 60:92:2, projective=True
+"""
 import os
 import re
 import numpy as np
