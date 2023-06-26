@@ -1,13 +1,8 @@
 """
-To run simulator on CS lattice with n=211 and beta=60..100 type:
-    run( n=211, q=4096, bpre=60, bpost=100,  projected=False )
-For projective lattice type:
-    run( n=221, q=4096, bpre=50, bpost=92,  projected=True )
-Currently avaliable data:
-    n=211, bpost = 60:100:2, projective=False
-    n=221, bpost = 60:100:2, projective=False
-    n=221, bpost = 60:92:2, projective=True
+An example of usage:
+ run(n=211, bpre=50, bpost=70, step=2, q=4096, projected=False)
 """
+
 import os
 import re
 import numpy as np
@@ -15,6 +10,8 @@ import numpy as np
 from fpylll.tools.bkz_simulator import  simulate, simulate_prob, averaged_simulate_prob
 from fpylll import IntegerMatrix, GSO, LLL, FPLLL, BKZ
 from copy import deepcopy
+
+from bkz_sim import bkzsim
 
 def checkDSD(r):
     """
@@ -62,7 +59,7 @@ def phione_profile(n,q):
 
     return l, denom
 
-def run(n=211, bpre=50, bpost=70, q=4096, projected=False):
+def run(n=211, bpre=50, bpost=70, step=2, q=4096, projected=False):
     RR = RealField(100)
 
     scale_factor = 1
@@ -119,8 +116,13 @@ def run(n=211, bpre=50, bpost=70, q=4096, projected=False):
         r = n*[ float(q)^2 ] + n*[ 1 ]
     else:
         r = [ pp / scale_factor^2 for pp in projected_profile ]
-    rcn = deepcopy ( r )
+    #rcn = deepcopy ( r )
+    #rkkn = deepcopy( r )
 
+    bkz = bkzsim( b0=bpre, b1=bpost, step=step, t0=5, t1=8, estimators="cn11 bsw18 kkn" )
+    out = bkz(r)
+    rbsw, rcn, rkkn = out["bsw18"], out["cn11"], out["kkn"]
+    """
     flags = 0 #| BKZ.VERBOSE
     for beta in range(7,bpre+1,1):
         #print(beta)
@@ -137,20 +139,22 @@ def run(n=211, bpre=50, bpost=70, q=4096, projected=False):
         rcn = simulate( rcn, BKZ.Param(block_size=beta, max_loops=tnum1, flags=flags) )[0]
         print(f"simulating beta={beta}...",end=", ")
     print()
-
-    r = [ log(rr)/2 for rr in r ]
-    rcn = [ log(rr)/2 for rr in rcn ]
+    """
+    rbsw = [ log(rr)/2 for rr in rbsw ]
+    rcn  = [ log(rr)/2 for rr in rcn ]
+    rkkn = [ log(rr)/2 for rr in rkkn ]
 
     if projected:
         n = len(l)//2
 
     rounding = RealField(28)
-    pract, bswest, cnest =  rounding(sum( l[n:] )) , rounding(sum(r[n:])), rounding(sum(rcn[n:]))
+    pract, bswest, cnest, kknest =  rounding(sum( l[n:] )) , rounding(sum(rbsw[n:])), rounding(sum(rcn[n:])), rounding(sum(rkkn[n:]))
     p0 =  list_plot(l, figsize=12, legend_label='$Practice$')
-    p1 =  list_plot(r, color="red", figsize=12, legend_label='$BSW18$', pointsize=15,) #BSW18
-    p2 = list_plot(rcn,color="green",legend_label='$CN11$', title=f'n={n}, beta={beta}, lattype={lattype}\n prac={pract}, bswest={bswest}, cnest={cnest}')  #CN11
+    p1 =  list_plot(rbsw, color="red", figsize=12, legend_label='$BSW18$', pointsize=15,) #BSW18
+    p2 = list_plot(rcn,color="green",legend_label='$CN11$', title=f'n={n}, beta={bpost}, lattype={lattype}\n prac={pract}, bswest={bswest},\n cnest={cnest}, kknest={kknest}')  #CN11
+    p3 = list_plot(rkkn,color="black",legend_label='New estimation' )
 
-    P = (p0+p1+p2)
+    P = (p0+p1+p2+p3)
     P.save_image( f"ntru_n{n}_b{bpost}_{lattype}.png" )
 
 #     for i in range(2*n):
@@ -159,7 +163,11 @@ def run(n=211, bpre=50, bpost=70, q=4096, projected=False):
     print("Avg experiment:")
     print(sum(l[n:]))
     print("BSW18 estimate:")
-    print(sum(r[n:]))
+    print(sum(rbsw[n:]))
     print("CN11 estimate:")
     print(sum(rcn[n:]))
+    print("KKN estimate:")
+    print(sum(rkkn[n:]))
     P.show()
+
+    (p0+p3).show(figsize=14)
