@@ -125,7 +125,7 @@ def simulate_prob_(r, param, prng_seed=0xdeadbeef):
 
     t0 = [True for _ in range(d)]
 
-    ceiling = float( log(1.02) ) #(1+log(log(param.block_size))/param.block_size)**2
+    ceiling = float( log(1.02,2) ) #(1+log(log(param.block_size))/param.block_size)**2
     for i in range(N):
         t1 = [False for _ in range(d)]
         for k in range(d - min(45, param.block_size)):
@@ -138,7 +138,7 @@ def simulate_prob_(r, param, prng_seed=0xdeadbeef):
             if phi:
                 X = random.expovariate(float(.5))
                 #lma = (log(X, 2.) + logV) / beta + c[beta - 1]
-                lma = log( X**(1/beta)+ ceiling , 2. ) + (logV) / beta + c[beta - 1] #first adjustment
+                lma = log( X**(1/beta) , 2. )+ ceiling + (logV) / beta + c[beta - 1] #first adjustment
                 if lma < r1[k]:
                     r2[k] = lma
                     r2[k+1] = r1[k] + log(sqrt(1-1./beta), 2)
@@ -238,9 +238,9 @@ def find_ncrit( r, beta ):
         # ghs = [ sqrt( sum( random.uniform(-sqrt(t)/2,sqrt(t)/2)**2 for t in rsave[i-beta:i-1] ) ) for cntr in range(10) ]
         # gh = log( sum( t**0.5/(3.*sqrt(2)) for t in rsave[i-beta:i-1] ), 2 ) / 2
 
-        gh =  sum(r[i-beta+1:i])/beta + lgamma(beta/2+1)/beta/log(2) - log(pi,2)/2
+        gh =  sum(r[i-beta+2:i])/(beta+1) + lgamma((beta+1)/2+1)/(beta+1)/log(2) - log(pi,2)/2
 
-        ghsub = sum(r[i-beta+1:i-1])/(beta-1) + lgamma((beta-1)/2+1)/(beta-1)/log(2) - log(pi,2.)/2
+        ghsub = sum(r[i-beta+2:i-1])/(beta) + lgamma((beta)/2+1)/(beta)/log(2) - log(pi,2.)/2
         #if the gaussian_heuristic of r[i-beta:i] is smaller than that of r[i-beta:i-1], we suppose that this projective lattice L_{n-i-beta+1:n-i} will be
         # reduced since the п_{n-i}( b[i] ) will be present in the linear combination resulting in the shortest vector of L_{n-i-beta+1:n-i}
         # X1, X2 = random.expovariate(float(.5)) , random.expovariate(float(.5))
