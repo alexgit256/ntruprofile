@@ -11,6 +11,8 @@ from fpylll.fplll.integer_matrix import IntegerMatrix
 from fpylll.fplll.gso import MatGSO, GSO
 from fpylll import FPLLL
 
+import numpy as np
+
 rk = (
     0.789527997160000,
     0.780003183804613,
@@ -59,8 +61,6 @@ rk = (
     -0.886666930030433,
 )
 rk = [ float(tmp) for tmp in rk ]
-
-#rk = (0.5686895473751552, 0.5359699815504112, 0.5255137692451786, 0.49178646036608964, 0.4862431366470149, 0.4539241716447169, 0.439279962793344, 0.402135394671832, 0.3931725523211086, 0.37981478447558925, 0.3398200412696649, 0.3368558037329511, 0.30629966810042486, 0.2755675154119165, 0.2511786004104135, 0.20680134072084413, 0.20904189532804804, 0.17169312196036376, 0.14962933225933747, 0.11431895318439869, 0.07884500913394762, 0.03608728528644142, 0.012031845114380685, -0.020172091499181366, -0.05206508245141708, -0.06985533595344542, -0.10284181205902496, -0.14282110314259927, -0.1670355701814028, -0.19473922264519622, -0.21121365739672732, -0.24816361043914598, -0.26543694776731647, -0.3050229765982675, -0.33877152641860814, -0.3557094517660114, -0.3815053161047508, -0.41024793701967543, -0.46678073903741213, -0.4937475778563, -0.514389454475363, -0.5430999322647294, -0.6160145800909798, -0.6216876315371647, -0.6433786162988564)
 
 def _extract_log_norms(r):
     if isinstance(r, IntegerMatrix):
@@ -235,17 +235,17 @@ def find_ncrit( r, beta ):
     #herconst =  log(sqrt(2),2) #log(sqrt(2)) #we take the worst epsilon from [2020-1237,just after the Theorem 5]
 
     for i in range( n,0,-1 ):
-        # ghs = [ sqrt( sum( random.uniform(-sqrt(t)/2,sqrt(t)/2)**2 for t in rsave[i-beta:i-1] ) ) for cntr in range(10) ]
+        # ghs = [ sqrt( sum( random.uniform(-t/2,t/2)**2 for t in rsave[i-beta:i-1] ) ) for cntr in range(10) ]
+        # gh = log( np.average(ghs), 2 )
         # gh = log( sum( t**0.5/(3.*sqrt(2)) for t in rsave[i-beta:i-1] ), 2 ) / 2
 
-        gh =  sum(r[i-beta+2:i])/(beta+1) + lgamma((beta+1)/2+1)/(beta+1)/log(2) - log(pi,2)/2
+        gh =  sum(r[i-beta+2:i])/(beta+1) + lgamma((beta+1)/2+1)/(beta+1)/log(2) - log(pi,2.)/2
 
         ghsub = sum(r[i-beta+2:i-1])/(beta) + lgamma((beta)/2+1)/(beta)/log(2) - log(pi,2.)/2
         #if the gaussian_heuristic of r[i-beta:i] is smaller than that of r[i-beta:i-1], we suppose that this projective lattice L_{n-i-beta+1:n-i} will be
         # reduced since the п_{n-i}( b[i] ) will be present in the linear combination resulting in the shortest vector of L_{n-i-beta+1:n-i}
-        # X1, X2 = random.expovariate(float(.5)) , random.expovariate(float(.5))
         # print( gh , ghsub )
-        if gh < ghsub:
-            print("aaa", i)
+        if gh < r[i-beta+2]:
+            print("m_crit: ", i)
             break
     return i
