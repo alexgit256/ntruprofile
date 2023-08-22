@@ -239,13 +239,13 @@ def find_ncrit( r, beta ):
         # gh = log( np.average(ghs), 2 )
         # gh = log( sum( t**0.5/(3.*sqrt(2)) for t in rsave[i-beta:i-1] ), 2 ) / 2
 
-        gh =  sum(r[i-beta+2:i])/(beta+1) + lgamma((beta+1)/2+1)/(beta+1)/log(2) - log(pi,2.)/2
+        gh =  sum(r[i-beta+1:i+1])/(beta) + lgamma((beta)/2+1)/(beta)/log(2) - log(pi,2.)/2
 
-        ghsub = sum(r[i-beta+2:i-1])/(beta) + lgamma((beta)/2+1)/(beta)/log(2) - log(pi,2.)/2
+        ghsub = sum(r[i-beta+1:i])/(beta-1) + lgamma((beta-1)/2+1)/(beta-1)/log(2) - log(pi,2.)/2
         #if the gaussian_heuristic of r[i-beta:i] is smaller than that of r[i-beta:i-1], we suppose that this projective lattice L_{n-i-beta+1:n-i} will be
         # reduced since the п_{n-i}( b[i] ) will be present in the linear combination resulting in the shortest vector of L_{n-i-beta+1:n-i}
-        # print( gh , ghsub )
-        if gh < r[i-beta+2]:
-            print("m_crit: ", i)
+        X1 = sum( log( random.expovariate(0.5), 2. ) for c in range(5) ) / 5
+        if gh < min( X1 + ghsub, r[i-beta+1] ): #if the expected norm of short vector is less than predicted, flat-line shrinks
+            print("m_crit: ", i, beta, len(r[i-beta+1:i+1]))
             break
     return i
