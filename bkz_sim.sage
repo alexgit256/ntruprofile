@@ -119,7 +119,7 @@ class bkzsim:
             print(f"bsw18: beta={beta}",end=", ")
             r = simulate_prob(r, BKZ.Param(block_size=beta, max_loops=10, flags=flags), prng_seed=144)[0]
             #r = averaged_simulate_prob(r,  BKZ.Param(block_size=beta, max_loops=t0, flags=flags), tries=10  )
-            r = r[0]
+            # r = r[0]
 
             #rcn = simulate( rcn, BKZ.Param(block_size=beta, max_loops=tnum0, flags=flags) )[0]
         print()
@@ -127,10 +127,8 @@ class bkzsim:
         for beta in range(b0,b1+1 ,step):
             r = simulate_prob(r, BKZ.Param(block_size=beta, max_loops=10, flags=flags), prng_seed=144)[0]
             # r = averaged_simulate_prob(r,  BKZ.Param(block_size=beta, max_loops=t1, flags=flags), tries=10  )
-            r = r[0 ]
+            # r = r[0]
             print(f"bsw18: beta={beta}",end=", ")
-
-            #rcn = simulate( rcn, BKZ.Param(block_size=beta, max_loops=tnum0, flags=flags) )[0]
 
         print()
         return r
