@@ -13,6 +13,8 @@ from fpylll import FPLLL
 
 import numpy as np
 
+FPLLL. set_precision(200)
+
 rk = (
     0.789527997160000,
     0.780003183804613,

@@ -41,7 +41,7 @@ def phione_profile(n,q):
     Bq = denom*Bq
     Bq = Bq.change_ring(ZZ)
     B = IntegerMatrix.from_matrix( Bq )
-    G = GSO.Mat( B, float_type='dd' )
+    G = GSO.Mat( B, float_type='mpfr' )
     G.update_gso()
 
     ldenom = log(denom)  #we assume, the tail has the same shape as qary vectors

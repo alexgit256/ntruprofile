@@ -7,6 +7,7 @@ from fpylll import IntegerMatrix, GSO, LLL, FPLLL, BKZ
 from copy import deepcopy
 
 from bkz_sim import bkzsim
+FPLLL. set_precision(200)
 
 def checkDSD(r):
     """
@@ -48,7 +49,7 @@ def phione_profile(n,q):
     Bq = denom*Bq   #we scale the lattice as in ntru_with_sieving
     Bq = Bq.change_ring(ZZ)
     B = IntegerMatrix.from_matrix( Bq )
-    G = GSO.Mat( B, float_type='dd' )
+    G = GSO.Mat( B, float_type='mpfr' )
     G.update_gso()
 
     # first_vector_norm = sqrt((q*(n-2))^2+(n-2)*q^2)/(n-1) * (n-1) #scaled
