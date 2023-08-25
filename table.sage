@@ -1,8 +1,3 @@
-"""
-An example of usage:
- run(n=211, bpre=50, bpost=70, step=2, q=4096, projected=False)
-"""
-
 import os
 import re
 import numpy as np
@@ -33,35 +28,55 @@ def checkDSD(r):
 def phione_profile(n,q):
     """
     Outputs profile of phi 1-orthogonal lattice and scaling factor.
+    param n: half the dimension of NTRU lattice
+    param q: modulus
     """
+    RR = RealField(144)
+
     onev = vector( [1 ]*n+[0 ]*n )
     n_ = n-1
     Bq = []
-    for i in range(n_):
+    for i in range(n_): #we project the qary lattice
         qv = vector(i*[0 ]+[q]+(n+n-i-1 )*[0 ])
         qv = qv - onev*qv/(n) * onev
         Bq.append( qv )
-
     Bq = matrix(Bq)
     denom = Bq.denominator()
 
     print( f"denom: {denom}" )
 
-    Bq = denom*Bq
+    Bq = denom*Bq   #we scale the lattice as in ntru_with_sieving
     Bq = Bq.change_ring(ZZ)
     B = IntegerMatrix.from_matrix( Bq )
     G = GSO.Mat( B, float_type='dd' )
     G.update_gso()
 
-    ldenom = log(denom)  #we assume, the tail has the same shape as qary vectors
-    lgq = log(q)
-    l = [ G.get_r(i,i)  for i in range(n_) ] + [ G.get_r(i,i)/q**2  for i in range(n_) ]
+    # first_vector_norm = sqrt((q*(n-2))^2+(n-2)*q^2)/(n-1) * (n-1) #scaled
+
+    qary = [ G.get_r(i,i)  for i in range(n-3) ]    #we get the qary profile
+    D = ( log(q)*(n-3)-log(n-1) + (2*n-4)*log(n-1) ).n() # the log determinant we expect to see
+    ones = [ RR(G.get_r(i,i))/q^2  for i in range(n-1) ]
+    # We scale the qary profile for it to resemble the profile of the second "half" of the vectors. This is
+    # somewhat correct since qary vectors projected against (1,0) span the same projective lattice B[0:n-2]
+    # and the last n-2 GS vectors before projecting b_{n-2},...,b_{2*n-5} against (0,1) are of the form (0,...,1,...,0).
+    # We don't chase the authentic initial profile since it does not exist: the vectors of proj_{(0,1)}( proj_{(1,0)}( B_\Phi ) )
+    # are linearlly dependent which cannot be resolved without distorting the r_{i,i} for all i < 2*n-4.
+
+    l = qary + ones
+    logl = [log(ll) for ll in l]
+    D2 = sum(logl)
+    D_over_D2_distributed = exp( (2*D-D2)/len(l) )
+
+    l = [float(ll*D_over_D2_distributed) for ll in l]
+    #print(f"Vol predicted:{D} vs generated:{sum([log(ll) for ll in l])/2}")
 
     return l, denom
 
-def run(n=211, bpre=50, bpost=70, step=2, q=4096, projected=False):
+def run(n=211, bpre=50, bpost=70, step=2, q=None, projected=False):
     RR = RealField(100)
 
+    if q is None:
+        q = 2**ceil(3.5 + log(n,2)) #HRSS
     scale_factor = 1
     lscale_factor = 0
     if projected is True:
@@ -168,6 +183,7 @@ def run(n=211, bpre=50, bpost=70, step=2, q=4096, projected=False):
     print(sum(rcn[n:]))
     print("KKN estimate:")
     print(sum(rkkn[n:]))
+    #print(f"Check. EXP:{sum(l)} BSW18:{sum(rbsw)} CN11:{sum(rcn)} KKN:{sum(rkkn)}")  #check if the profiles sum up to a same value
     P.show()
 
     (p0+p3).show(figsize=14)

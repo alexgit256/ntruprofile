@@ -4,9 +4,6 @@
 from sage.all_cmdline import *   # import sage library
 
 from fpylll import *
-from keygen import NTRUKeyGenerator
-from pre_processing import projectAgainstOne
-from pre_processing import projection, projectAgainstOne
 
 from fpylll import *
 from fpylll import BKZ as BKZ_FPYLLL
@@ -175,7 +172,7 @@ class bkzsim:
         flags = 0  #| BKZ.VERBOSE
         q = r[0]
         m = round( get_m(q,b0) )
-        left, right =  m, min(2*n, m+n-1) 
+        left, right =  m, min(2*n, m+n-1)
         print(f"left:{left} right:{right}")
         t = r[left:right]
         tnum0, tnum1 = 1 , 8
