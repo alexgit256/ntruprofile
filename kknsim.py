@@ -10,6 +10,7 @@ from fpylll.fplll.bkz import BKZ
 from fpylll.fplll.integer_matrix import IntegerMatrix
 from fpylll.fplll.gso import MatGSO, GSO
 from fpylll import FPLLL
+from fpylll.util import gaussian_heuristic
 
 import numpy as np
 
@@ -63,6 +64,8 @@ rk = (
     -0.886666930030433,
 )
 rk = [ float(tmp) for tmp in rk ]
+
+approx_svp_factor = float( log(1.02,2) ) #(1+log(log(param.block_size))/param.block_size)**2
 
 def _extract_log_norms(r):
     if isinstance(r, IntegerMatrix):
@@ -127,7 +130,6 @@ def simulate_prob_(r, param, prng_seed=0xdeadbeef):
 
     t0 = [True for _ in range(d)]
 
-    ceiling = float( log(1.02,2) ) #(1+log(log(param.block_size))/param.block_size)**2
     for i in range(N):
         t1 = [False for _ in range(d)]
         for k in range(d - min(45, param.block_size)):
@@ -140,7 +142,7 @@ def simulate_prob_(r, param, prng_seed=0xdeadbeef):
             if phi:
                 X = random.expovariate(float(.5))
                 #lma = (log(X, 2.) + logV) / beta + c[beta - 1]
-                lma = log( X**(1/beta) , 2. )+ ceiling + (logV) / beta + c[beta - 1] #first adjustment
+                lma = log( X**(1/beta) , 2. )+ approx_svp_factor + (logV) / beta + c[beta - 1] #first adjustment
                 if lma < r1[k]:
                     r2[k] = lma
                     r2[k+1] = r1[k] + log(sqrt(1-1./beta), 2)
@@ -229,25 +231,42 @@ def averaged_simulate_prob_(L, param, tries=10):
     j = j/tries
     return list(map(exp, i)), j
 
+def find_current_ncrit( r ):
+    n = len(r)
+    for ncrit in range(0,n-1):
+        if r[ncrit] < 0.1*r[ncrit+1]:
+            return ncrit
+    return n
+
 def find_ncrit( r, beta ):
-    rsave = [ sqrt(rr) for rr in r ]
+    assert len(r)!=0, "Empty profile!"
+    ncrit = find_current_ncrit( r ) #we find the actual ncrit for the given basis
+    rsave = [ rr for rr in r ]
     r = [ log(rr,2.)/2.0 for rr in r ] # _extract_log_norms( r )
     n = len(r)
 
     #herconst =  log(sqrt(2),2) #log(sqrt(2)) #we take the worst epsilon from [2020-1237,just after the Theorem 5]
 
-    for i in range( n,0,-1 ):
+    for i in range( min(n,ncrit+beta),-1,-1 ):
         # ghs = [ sqrt( sum( random.uniform(-t/2,t/2)**2 for t in rsave[i-beta:i-1] ) ) for cntr in range(10) ]
         # gh = log( np.average(ghs), 2 )
-        # gh = log( sum( t**0.5/(3.*sqrt(2)) for t in rsave[i-beta:i-1] ), 2 ) / 2
+        # ghsub = log( sum( t**0.5/(3.*sqrt(2)) for t in rsave[i-beta:i-1] ), 2 ) / 2
+        ghsub = log( sum( t**0.5/(3.*sqrt(2)) for t in rsave[i-beta:i-1] )**2 + 1, 2 ) / 4
 
-        gh =  sum(r[i-beta+1:i+1])/(beta) + lgamma((beta)/2+1)/(beta)/log(2) - log(pi,2.)/2
+        gh =  sum(r[max(0,i-beta+1):i+1])/(beta) + lgamma((beta)/2+1)/(beta)/log(2) - log(pi,2.)/2
 
-        ghsub = sum(r[i-beta+1:i])/(beta-1) + lgamma((beta-1)/2+1)/(beta-1)/log(2) - log(pi,2.)/2
+        # ghsub = sum(r[max(0,i-beta+1):i])/(beta-1) + lgamma((beta-1)/2+1)/(beta-1)/log(2) - log(pi,2.)/2
         #if the gaussian_heuristic of r[i-beta:i] is smaller than that of r[i-beta:i-1], we suppose that this projective lattice L_{n-i-beta+1:n-i} will be
         # reduced since the п_{n-i}( b[i] ) will be present in the linear combination resulting in the shortest vector of L_{n-i-beta+1:n-i}
-        X1 = sum( log( random.expovariate(0.5), 2. ) for c in range(5) ) / 5
-        if gh < min( X1 + ghsub, r[i-beta+1] ): #if the expected norm of short vector is less than predicted, flat-line shrinks
+        X1 = log( random.expovariate(0.5) )
+        if min( gh + approx_svp_factor, r[i-beta+1] ) < min( X1 + ghsub, r[i-beta+1] ):
             print("m_crit: ", i, beta, len(r[i-beta+1:i+1]))
             break
+
+
+        # print( f"gh={gh} X1={(X1)} r={r[i-beta+1]} gh/r = {gh-r[i-beta+1]}" )
+        # if gh + X1 < r[i-beta+1]: #if the expected norm of short vector (approxSVP) is less than predicted, flat-line shrinks
+        #     print("m_crit: ", i, beta, len(r[i-beta+1:i+1]))
+        #     if random.randrange(2**32)>2**31:
+        #         break
     return i
