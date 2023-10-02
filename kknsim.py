@@ -1,6 +1,6 @@
 from fpylll.fplll.gso import MatGSO
 from copy import copy
-from math import log, sqrt, lgamma, pi, exp
+from math import log, sqrt, lgamma, pi, exp, sqrt, floor, prod
 from collections import OrderedDict
 import random
 
@@ -15,6 +15,7 @@ from fpylll.util import gaussian_heuristic
 import numpy as np
 
 FPLLL. set_precision(200)
+e = np.exp(1)
 
 rk = (
     0.789527997160000,
@@ -248,20 +249,28 @@ def find_ncrit( r, beta ):
     #herconst =  log(sqrt(2),2) #log(sqrt(2)) #we take the worst epsilon from [2020-1237,just after the Theorem 5]
 
     for i in range( min(n,ncrit+beta),-1,-1 ):
+        prob = hanrot_stehle_prob( rsave[i-beta+1:i+1] )
+        if random.uniform(0.,1.)< prob:
+            print(f"Hanrot-Stehle in action! {prob}")
+            break
         # ghs = [ sqrt( sum( random.uniform(-t/2,t/2)**2 for t in rsave[i-beta:i-1] ) ) for cntr in range(10) ]
         # gh = log( np.average(ghs), 2 )
         # ghsub = log( sum( t**0.5/(3.*sqrt(2)) for t in rsave[i-beta:i-1] ), 2 ) / 2
-        ghsub = log( sum( t**0.5/(3.*sqrt(2)) for t in rsave[i-beta:i-1] )**2 + 1, 2 ) / 4
 
+        """
+        ghsub = log( sum( t**0.5/(3.*sqrt(2)) for t in rsave[i-beta:i-1] )**2 + 1, 2 ) / 4
         gh =  sum(r[max(0,i-beta+1):i+1])/(beta) + lgamma((beta)/2+1)/(beta)/log(2) - log(pi,2.)/2
+        """
 
         # ghsub = sum(r[max(0,i-beta+1):i])/(beta-1) + lgamma((beta-1)/2+1)/(beta-1)/log(2) - log(pi,2.)/2
         #if the gaussian_heuristic of r[i-beta:i] is smaller than that of r[i-beta:i-1], we suppose that this projective lattice L_{n-i-beta+1:n-i} will be
         # reduced since the п_{n-i}( b[i] ) will be present in the linear combination resulting in the shortest vector of L_{n-i-beta+1:n-i}
+        """
         X1 = log( random.expovariate(0.5) )
         if min( gh + approx_svp_factor, r[i-beta+1] ) < min( X1 + ghsub, r[i-beta+1] ):
             print("m_crit: ", i, beta, len(r[i-beta+1:i+1]))
             break
+        """
 
 
         # print( f"gh={gh} X1={(X1)} r={r[i-beta+1]} gh/r = {gh-r[i-beta+1]}" )
@@ -270,3 +279,18 @@ def find_ncrit( r, beta ):
         #     if random.randrange(2**32)>2**31:
         #         break
     return i
+
+
+def hanrot_stehle_prob( r ):
+    """
+    param r: r_{i,i}**2 - squares of GS norms
+    out: upper bound on the probability that the shortest vector s = sum(c_i*b_i) + c_{d-1}*b_{d-1}
+    with c_{d-1} != 0
+    Source: Guillaume Hanrot, Damien Stehlé. Worst-Case Hermite-Korkine-Zolotarev Reduced Lattice Bases.
+    [Research Report] RR-6422, INRIA. 2008, pp.25. inria-00211875v2 - Lemma 1
+    """
+    r = [ sqrt(rr) for rr in r ]
+    d = len(r)
+    div = floor( r[0]/r[-1] )
+    pr = ( 2*pi*e/(d-1) )**((d-1)/2) * sum( (1-(x*r[-1]/r[0])**2)**((d-1)/2) for x in range(1,div) ) * prod(r[0]/r[i] for i in range(d-1))
+    return pr

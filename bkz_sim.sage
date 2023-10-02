@@ -64,7 +64,7 @@ class bkzsim:
                 default_param[key] = params[key]
         default_param[key] = default_param['estimators'].split()
         self.params = default_param
-
+        self.ncrits = []
 
     def __call__( self, r, **params ):
         default_param = self.params
@@ -183,6 +183,7 @@ class bkzsim:
         nmax=right
         for beta in range(b0,b1+1,step):
             nmax = max( nmax,kknsim.find_ncrit( r,beta ) )
+            self.ncrits.append( (beta,nmax) )
             # t = kknsim.averaged_simulate_prob_(r[:nmax],  BKZ.Param(block_size=beta, max_loops=tnum1, flags=flags), tries=5  )
             t = kknsim.simulate_prob_(r[:nmax],  BKZ.Param(block_size=beta, max_loops=tnum1, flags=flags)  )
             t = t[0]
