@@ -214,7 +214,7 @@ class bkzsim:
         flags = 0  #| BKZ.VERBOSE
         q = r[0]**0.5
         slope_ = slope(min_blocksize)
-        m =  round( log(q)/(2*slope_) )  #round( get_m(q,b0) )
+        m =  round( log(q)/(2*slope_)/1.42 )  #round( get_m(q,b0) ) WITHOUT 1.42
         #left, right =  m, min(2*n, m+n-1)
         left = 0
         mid = find_current_ncrit( r )

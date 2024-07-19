@@ -253,9 +253,6 @@ def find_ncrit( r, beta ):
         if random.uniform(0.,1.)< prob:
             print(f"Hanrot-Stehle in action! {prob}")
             break
-        # ghs = [ sqrt( sum( random.uniform(-t/2,t/2)**2 for t in rsave[i-beta:i-1] ) ) for cntr in range(10) ]
-        # gh = log( np.average(ghs), 2 )
-        # ghsub = log( sum( t**0.5/(3.*sqrt(2)) for t in rsave[i-beta:i-1] ), 2 ) / 2
 
         """
         ghsub = log( sum( t**0.5/(3.*sqrt(2)) for t in rsave[i-beta:i-1] )**2 + 1, 2 ) / 4
@@ -272,6 +269,9 @@ def find_ncrit( r, beta ):
             break
         """
 
+        # ghs = [ sqrt( sum( random.uniform(-t/2,t/2)**2 for t in rsave[i-beta:i-1] ) ) for cntr in range(10) ]
+        # gh = log( np.average(ghs), 2 )
+        # ghsub = log( sum( t**0.5/(3.*sqrt(2)) for t in rsave[i-beta:i-1] ), 2 ) / 2
 
         # print( f"gh={gh} X1={(X1)} r={r[i-beta+1]} gh/r = {gh-r[i-beta+1]}" )
         # if gh + X1 < r[i-beta+1]: #if the expected norm of short vector (approxSVP) is less than predicted, flat-line shrinks
